@@ -44,7 +44,7 @@ gridPage.updateOutputState = function()
          : Colour.OFF);*/
 
 	// Set the top LED of Mixer red when mixer alligned
-   setTopLED(7, this.mixerAlignedGrid ? (gridPage.firstStep ? Colour.RED_FLASHING:Colour.GREEN_FULL) : (gridPage.firstStep ? Colour.RED_FLASHING:Colour.GREEN_LOW));
+   setTopLED(7, seqPage.stepColor(this.mixerAlignedGrid ? Colour.GREEN_FULL : Colour.GREEN_LOW));
 };
 
 // This detects when the Mixer button is pressed and changes the orientation identifier mixerAlignedGrid and displays the text popup
@@ -165,10 +165,6 @@ gridPage.onDown = function(isPressed)
 REFROW=false;
 ROWARM=false;
 
-gridPage.onStepPlay = function(step)
-{
-   gridPage.firstStep = !step;
-};
 
 gridPage.onGridButton = function(row, column, pressed)
 {
@@ -191,9 +187,11 @@ gridPage.onGridButton = function(row, column, pressed)
       var t = trackBank.getTrack(track);
       var l = t.getClipLauncher();
         
-      l.select(scene);
+      
       if(ARMED){
        application.focusPanelAbove();
+       application.arrowKeyDown();
+       l.select(scene);
        if(ARMED == 8){
                 if(hasContent[track+8*scene]>0){
                         application.cut();
@@ -204,9 +202,14 @@ gridPage.onGridButton = function(row, column, pressed)
                 if(hasContent[track+8*scene]>0){
                         application.copy();
                 }else{
-                        l.createEmptyClip(scene,ARMED*4);
+                        l.createEmptyClip(scene,1<<(ARMED+1));
                 }
                 
+        }
+        if(IS_EDIT_PRESSED || IS_KEYS_PRESSED){
+                trackBank.getTrack(track).select();
+                l.showInEditor(scene);
+                l.launch(scene);       
         }
       }else if (IS_RECORD_PRESSED)
       {
@@ -235,7 +238,6 @@ gridPage.onGridButton = function(row, column, pressed)
 
 			 case TrackModeColumn.SELECT:
 				trackBank.getTrack(track).select();
-				application.selectNone();
 				break;
 
 			 case TrackModeColumn.ARM:
@@ -323,15 +325,15 @@ gridPage.onGridButton = function(row, column, pressed)
             break;
 
          case TempMode.USER1:
-            userControls.getControl(this.mixerAlignedGrid ? column : row).set(vv,128);
+            userControls.getControl(cc).set(vv,128);
             break;
 
          case TempMode.USER2:
-            userControls.getControl(this.mixerAlignedGrid ? column : row + 8).set(vv,128);
+            userControls.getControl(cc + 8).set(vv,128);
             break;
 
          case TempMode.USER3:
-            userControls.getControl(this.mixerAlignedGrid ? column : row + 16).set(vv,128);
+            userControls.getControl(cc + 16).set(vv,128);
             break;
       }
    }

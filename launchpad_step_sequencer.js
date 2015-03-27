@@ -66,6 +66,21 @@ seqPage.viewOffset = function()
 	return Math.min(x, SEQ_BUFFER_STEPS - 32);
 }
 
+seqPage.stepColor = function(c,s,f)
+{
+    if(seqPage.playingStep){
+        var d = seqPage.lastStep - seqPage.playingStep;
+        switch(d){
+            case 0: c = s ? (!f ? c:s):Colour.AMBER_FULL;break;
+            case 1: c = s ? (f ? c:s):Colour.YELLOW_LOW;break;
+            default: break;
+       }
+    }else{
+        c = s?c:Colour.RED_LOW;
+    }
+    return c;
+}
+
 seqPage.updateOutputState = function()
 {
    clear();
@@ -73,8 +88,7 @@ seqPage.updateOutputState = function()
    this.canScrollDown = activeNoteMap.canScrollDown();
    this.updateScrollButtons();
    setTopLED(6, WRITEOVR ? Colour.RED_FULL:Colour.YELLOW_FULL);
-   setTopLED(7, this.detailMode ? (gridPage.firstStep ? Colour.RED_FLASHING:Colour.GREEN_FULL) : (gridPage.firstStep ? Colour.RED_FLASHING:Colour.GREEN_LOW));
-
+   setTopLED(7, seqPage.stepColor(this.detailMode ? Colour.GREEN_FULL : Colour.GREEN_LOW));
    this.drawSequencer();
 };
 
@@ -214,6 +228,9 @@ seqPage.onStepExists = function(column, row, state)
 
 seqPage.onStepPlay = function(step)
 {
+   if(step < seqPage.playingStep){
+        seqPage.lastStep = seqPage.playingStep;
+   }
    seqPage.playingStep = step;
 };
 
@@ -261,8 +278,8 @@ seqPage.drawSequencer = function()
 
    for(var i=0; i<4; i++)
    {
-      setRightLED(i, seqPage.stepSize == i ? Colour.GREEN_FULL : Colour.GREEN_LOW);
-      setRightLED(4 + i, seqPage.velocityStep == i ? Colour.AMBER_FULL : Colour.AMBER_LOW);
+      setRightLED(i, seqPage.stepSize == i ? seqPage.stepColor(Colour.GREEN_FULL, Colour.GREEN_LOW,true) : Colour.GREEN_LOW);
+      setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL, Colour.AMBER_LOW) : Colour.AMBER_LOW);
    }
 
    for(var x=0; x<8; x++)

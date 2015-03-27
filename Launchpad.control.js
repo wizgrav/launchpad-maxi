@@ -284,7 +284,6 @@ function init()
    cursorClip.addStepDataObserver(seqPage.onStepExists);
    cursorClip.addPlayingStepObserver(seqPage.onStepPlay);
    
-   cursorClip.addPlayingStepObserver(gridPage.onStepPlay);
    cursorClip.scrollToKey(0);
 
    // Call resetdevice which clears all the lights

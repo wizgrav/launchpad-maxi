@@ -17,17 +17,17 @@ keysPage.updateOutputState = function()
    this.canScrollRight = activeNoteMap.canScrollRight();
    this.updateScrollButtons();
    setTopLED(5, WRITEOVR ? Colour.RED_FULL:Colour.YELLOW_FULL);
-
+        
    for(var i=0; i<4; i++)
    {
        var isCurrent = noteMaps[i] == activeNoteMap;
        var hasMap = noteMaps[i] != null;
 	   // sets the LED of the current notemap (top 4 side buttons)
-       setRightLED(i, hasMap ? (isCurrent ? Colour.GREEN_FULL : Colour.GREEN_LOW) : Colour.OFF);
+       setRightLED(i, hasMap ? (isCurrent ? seqPage.stepColor(Colour.GREEN_FULL,Colour.GREEN_LOW,true) : Colour.GREEN_LOW) : Colour.OFF);
 	   // sets the velocity button color (bottom 4 side buttons)
-       setRightLED(4 + i, seqPage.velocityStep == i ? Colour.AMBER_FULL : Colour.AMBER_LOW);
+       setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL,Colour.AMBER_LOW) : Colour.AMBER_LOW);
    }
-   setTopLED(7, gridPage.firstStep ? Colour.RED_FLASHING:Colour.GREEN_FULL);
+   setTopLED(7, seqPage.stepColor(Colour.GREEN_LOW));
    this.drawKeys();
 };
 

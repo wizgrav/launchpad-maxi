@@ -129,7 +129,7 @@ smallDrumNoteMap.canScrollLeft = function()
 
 smallDrumNoteMap.scrollLeft = function()
 {
-   activeNoteMap = largeDrumNoteMap;
+   activeNoteMap = altDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -140,7 +140,7 @@ smallDrumNoteMap.canScrollRight = function()
 
 smallDrumNoteMap.scrollRight = function()
 {
-   activeNoteMap = altDrumNoteMap;
+   activeNoteMap = largeDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -199,7 +199,7 @@ largeDrumNoteMap.canScrollLeft = function()
 
 largeDrumNoteMap.scrollLeft = function()
 {
-   activeNoteMap = altDrumNoteMap;
+   activeNoteMap = smallDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -210,7 +210,7 @@ largeDrumNoteMap.canScrollRight = function()
 
 largeDrumNoteMap.scrollRight = function()
 {
-   activeNoteMap = smallDrumNoteMap;
+   activeNoteMap = altDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -272,20 +272,20 @@ altDrumNoteMap.canScrollRight = function()
    return true;
 };
 
-largeDrumNoteMap.canScrollLeft = function()
+altDrumNoteMap.canScrollLeft = function()
 {
    return true;
 };
 
-largeDrumNoteMap.scrollLeft = function()
+altDrumNoteMap.scrollLeft = function()
 {
-   activeNoteMap = smallDrumNoteMap;
+   activeNoteMap = largeDrumNoteMap;
    updateNoteTranlationTable();
 };
 
 altDrumNoteMap.scrollRight = function()
 {
-   activeNoteMap = largeDrumNoteMap;
+   activeNoteMap = smallDrumNoteMap;
    updateNoteTranlationTable();
 };
 
