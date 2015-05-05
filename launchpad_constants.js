@@ -1,4 +1,3 @@
-
 // CCs for the Top buttons
 var TopButton =
 {

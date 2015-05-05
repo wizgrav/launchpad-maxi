@@ -129,7 +129,7 @@ smallDrumNoteMap.canScrollLeft = function()
 
 smallDrumNoteMap.scrollLeft = function()
 {
-   activeNoteMap = altDrumNoteMap;
+   activeNoteMap = largeDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -210,7 +210,7 @@ largeDrumNoteMap.canScrollRight = function()
 
 largeDrumNoteMap.scrollRight = function()
 {
-   activeNoteMap = altDrumNoteMap;
+   activeNoteMap = smallDrumNoteMap;
    updateNoteTranlationTable();
 };
 
@@ -222,83 +222,6 @@ largeDrumNoteMap.getName = function()
 {
    return "Drums (large)";
 }
-
-//----------------------------------------------------------------------------------------------------------
-
-altDrumNoteMap = new NoteMap();
-altDrumNoteMap.lookupMatrix = [[6,6,2,2,2,2,7,7],
-                         [6,6,2,2,2,2,7,7],
-                         [5,5,1,1,1,1,3,3],
-                         [5,5,1,0,0,1,3,3],
-                         [5,5,1,0,0,1,3,3],
-                         [5,5,1,1,1,1,3,3],
-                         [9,9,4,4,4,4,8,8],
-                         [9,9,4,4,4,4,8,8]];
-altDrumNoteMap.cellToKey = function(x, y)
-{
-    return this.rootKey+this.lookupMatrix[y][x];
-};
-
-altDrumNoteMap.keyIsBlack = function(key)
-{
-    var i = key-this.rootKey;
-    return !i || (i >1 && i < 6);
-};
-
-altDrumNoteMap.scrollUp = function()
-{
-   this.rootKey = Math.min(this.rootKey + 10, 124);
-   updateNoteTranlationTable();
-};
-
-altDrumNoteMap.scrollDown = function()
-{
-   this.rootKey = Math.max(this.rootKey - 10, 4);
-   updateNoteTranlationTable();
-};
-
-altDrumNoteMap.canScrollUp = function()
-{
-   return this.rootKey < 124;
-};
-
-altDrumNoteMap.canScrollDown = function()
-{
-   return this.rootKey  > 4;
-};
-
-altDrumNoteMap.canScrollRight = function()
-{
-   return true;
-};
-
-altDrumNoteMap.canScrollLeft = function()
-{
-   return true;
-};
-
-altDrumNoteMap.scrollLeft = function()
-{
-   activeNoteMap = largeDrumNoteMap;
-   updateNoteTranlationTable();
-};
-
-altDrumNoteMap.scrollRight = function()
-{
-   activeNoteMap = smallDrumNoteMap;
-   updateNoteTranlationTable();
-};
-
-altDrumNoteMap.mixerButton = function()
-{
-};
-
-altDrumNoteMap.getName = function()
-{
-   return "Drums (alt)";
-}
-
-//----------------------------------------------------------------------------------------------------------
 
 
 //----------------------------------------------------------------------------------------------------------

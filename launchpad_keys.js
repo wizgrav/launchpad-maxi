@@ -16,19 +16,21 @@ keysPage.updateOutputState = function()
    this.canScrollLeft = activeNoteMap.canScrollLeft();
    this.canScrollRight = activeNoteMap.canScrollRight();
    this.updateScrollButtons();
-   setTopLED(5, WRITEOVR ? Colour.RED_FULL:Colour.YELLOW_FULL);
-        
+   setTopLED(5,  ARMED ? (WRITEOVR ? Colour.RED_FLASHING:Colour.YELLOW_FLASHING): (WRITEOVR ? Colour.RED_FULL:Colour.YELLOW_FULL));
    for(var i=0; i<4; i++)
    {
        var isCurrent = noteMaps[i] == activeNoteMap;
        var hasMap = noteMaps[i] != null;
-	   // sets the LED of the current notemap (top 4 side buttons)
-       setRightLED(i, hasMap ? (isCurrent ? seqPage.stepColor(Colour.GREEN_FULL,Colour.GREEN_LOW,true) : Colour.GREEN_LOW) : Colour.OFF);
-	   // sets the velocity button color (bottom 4 side buttons)
-       setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL,Colour.AMBER_LOW) : Colour.AMBER_LOW);
+           // sets the LED of the current notemap (top 4 side buttons)
+       setRightLED(i, hasMap ? (isCurrent ? seqPage.stepColor(Colour.GREEN_FULL,Colour.OFF,true) : (!IS_KEYS_PRESSED?Colour.OFF:Colour.GREEN_LOW)) : Colour.OFF);
+           // sets the velocity button color (bottom 4 side buttons)
+       setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL,Colour.OFF) : (!IS_KEYS_PRESSED?Colour.OFF:Colour.AMBER_LOW));
    }
+  
    setTopLED(7, seqPage.stepColor(Colour.GREEN_LOW));
-   this.drawKeys();
+   if(TEMPMODE!=TempMode.OFF){ 
+           gridPage.updateGrid();
+   }else{ this.drawKeys();}
 };
 
 keysPage.onShift = function(isPressed)
@@ -42,12 +44,21 @@ keysPage.onShift = function(isPressed)
    }
 }
 
+keysPage.mixerButton = function(){
+       activeNoteMap.mixerButton();
+}
+
 keysPage.onSceneButton = function(row, isPressed)
 {
-   if (!isPressed) return;
-   if(IS_KEYS_PRESSED){
-        activeNoteMap.mixerButton(row);
-   } else if (row >= 4)
+   if (!isPressed){
+        gridPage.setTempMode(TempMode.OFF);
+        updateNoteTranlationTable();
+        return;
+   } 
+   if(!IS_KEYS_PRESSED){
+        gridPage.onSceneButton(row,isPressed);
+        updateNoteTranlationTable();
+   }else if (row >= 4)
    {
       seqPage.setVelocity(row - 4);
    }
@@ -98,23 +109,11 @@ keysPage.scrollKey = function(offset)
    keysPage.rootKey = Math.max(0, Math.min(70, keysPage.rootKey + offset));
 };
 
+
+
 keysPage.onGridButton = function(row, column, pressed)
 {
-   /*var key = activeNoteMap.cellToKey(column, row);
-
-   if (key >= 0)
-   {
-      var velocity = 90;
-
-      if (pressed)
-      {
-         cursorTrack.startNote(key, velocity);
-      }
-      else
-      {
-         cursorTrack.stopNote(key, velocity);
-      }
-   }*/
+        if(TEMPMODE != TempMode.OFF) gridPage.onGridButton(row, column, pressed);
 };
 
 // Draws the keys
@@ -131,5 +130,5 @@ keysPage.drawKeys = function()
 
 keysPage.shouldKeyBeUsedForNoteInport = function(x,y)
 {
-   return true;
+   return TEMPMODE == TempMode.OFF;
 }

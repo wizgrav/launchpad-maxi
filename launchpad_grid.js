@@ -73,13 +73,18 @@ gridPage.onShift = function(isPressed)
    }
 }
 
-
+var DIMARM = false;
 // This detects when one of the vertical buttons is pressed and changes the TempMode
 gridPage.onSceneButton = function(row, isPressed)
 {
    if (isPressed)
    {
       if (TEMPMODE == TempMode.SCENE){
+         if(ARMED == row+1){
+                DIMARM = !DIMARM;     
+         }else{
+                DIMARM = false;
+         }
          ARMED = row+1;
          return;        
       }
@@ -162,18 +167,31 @@ gridPage.onDown = function(isPressed)
 	  }
    }
 };
-REFROW=false;
+
 ROWARM=false;
 
+gridPage.calcTrackValue = function(c,n,o){
+        var t=o&1;
+        o>>=1;
+        if(n>o){
+                return 2*n;
+        }else if(n<o){
+                return 2*n+1;
+        }else{
+            if(t){
+                return 2*n;
+                
+            }else{
+                return 2*n+1;
+            }
+        }
+
+}
 
 gridPage.onGridButton = function(row, column, pressed)
 {
    if (!pressed){ 
-        REFROW--;
-        if(!REFROW) ROWARM = false; 
         return;
-   }else{
-        REFROW++;
    }
 
    if (TEMPMODE === TempMode.SCENE)
@@ -202,25 +220,29 @@ gridPage.onGridButton = function(row, column, pressed)
                 if(hasContent[track+8*scene]>0){
                         application.copy();
                 }else{
-                        l.createEmptyClip(scene,1<<(ARMED+1));
+                        l.createEmptyClip(scene,Math.floor((1<<(ARMED+1))*(DIMARM?0.75:1)));
                 }
                 
         }
         if(IS_EDIT_PRESSED || IS_KEYS_PRESSED){
                 trackBank.getTrack(track).select();
                 l.showInEditor(scene);
-                l.launch(scene);       
+                l.launch(scene);
+                clear();       
         }
       }else if (IS_RECORD_PRESSED)
       {
+        l.select(scene);
          l.record(scene);
       }
       else if (IS_EDIT_PRESSED)
       {
+         l.select(scene);
          l.showInEditor(scene);
       }
       else
       {
+        l.select(scene);
          l.launch(scene);
       }
    }
@@ -295,45 +317,35 @@ gridPage.onGridButton = function(row, column, pressed)
    {
       var vv = this.mixerAlignedGrid ? -Math.abs(row)+7 : column;
       var cc = this.mixerAlignedGrid ? column : row;
-      if(ARMED){
-        if(ROWARM){
-           vv = ROWARM[0]*16 + vv*2;
-           cc = ROWARM[1];
-        }else{
-           ROWARM=[vv,cc];
-           return;
-        }
-      }else{
-        vv = vv*16;
-      } 
+      
       switch(TEMPMODE)
       {
          case TempMode.VOLUME:
-            trackBank.getTrack(cc).getVolume().set(vv,128);
+            trackBank.getTrack(cc).getVolume().set(this.calcTrackValue(cc,vv,volume[cc]),16);
             break;
 
          case TempMode.PAN:
-            trackBank.getTrack(cc).getPan().set(vv,128);
+            trackBank.getTrack(cc).getPan().set(this.calcTrackValue(cc,vv,pan[cc]),16);
             break;
 
          case TempMode.SEND_A:
-            trackBank.getTrack(cc).getSend(0).set(vv,128);
+            trackBank.getTrack(cc).getSend(0).set(this.calcTrackValue(cc,vv,sendA[cc]),16);
             break;
 
          case TempMode.SEND_B:
-            trackBank.getTrack(cc).getSend(1).set(vv,128);
+            trackBank.getTrack(cc).getSend(1).set(this.calcTrackValue(cc,vv,sendB[cc]),16);
             break;
 
          case TempMode.USER1:
-            userControls.getControl(cc).set(vv,128);
+            userControls.getControl(cc).set(this.calcTrackValue(cc,vv,userValue[cc]),16);
             break;
 
          case TempMode.USER2:
-            userControls.getControl(cc + 8).set(vv,128);
+            userControls.getControl(cc + 8).set(this.calcTrackValue(cc,vv,userValue[cc+8]),16);
             break;
 
          case TempMode.USER3:
-            userControls.getControl(cc + 16).set(vv,128);
+            userControls.getControl(cc + 16).set(this.calcTrackValue(cc,vv,userValue[cc+16]),16);
             break;
       }
    }
@@ -390,7 +402,7 @@ gridPage.updateVuMeter = function(track)
         if(ARMED==8){
                 colour = Colour.RED_FULL;
         }else if(track <= ARMED-1){
-                colour = Colour.ORANGE;
+                colour = (track == ARMED - 1 && DIMARM) ? Colour.RED_LOW:Colour.ORANGE;
         }
    }else{
            if (this.mixerAlignedGrid)
@@ -445,7 +457,7 @@ gridPage.updateVuMeter = function(track)
 
 gridPage.updateTrackValue = function(track)
 {
-   if (activePage != gridPage) return;
+   //if (activePage != gridPage) return;
 	// this section draws the pads for the main clip launcher
    if (TEMPMODE == TempMode.OFF || TEMPMODE == TempMode.SCENE)
    {
@@ -535,8 +547,8 @@ gridPage.updateTrackValue = function(track)
    {
       for(var scene=0; scene<8; scene++)
       {
-         var c = (volume[track] == scene)
-            ? Colour.GREEN_FULL
+         var c = ((volume[track]>>1) == scene)
+            ? (volume[track] & 1 ? Colour.GREEN_FULL:Colour.GREEN_LOW)
             : ((vuMeter[track] > scene))
                ? Colour.GREEN_LOW
                : Colour.OFF;
@@ -549,23 +561,26 @@ gridPage.updateTrackValue = function(track)
    {
       var value = 0;
       var oncolor = Colour.GREEN_FULL;
+      var halfcolor = Colour.GREEN_LOW;
       var offcolor = Colour.OFF;
-
       switch (TEMPMODE)
       {
          case TempMode.PAN:
             value = pan[track];
             oncolor = Colour.AMBER_FULL;
+            halfcolor =  Colour.AMBER_LOW;
             break;
 
          case TempMode.SEND_A:
             value = sendA[track];
-			oncolor = Colour.YELLOW_FULL;
+	    oncolor = Colour.YELLOW_FULL;
+            halfcolor =  Colour.YELLOW_LOW;
             break;
 
          case TempMode.SEND_B:
             value = sendB[track];
-			oncolor = Colour.YELLOW_FULL;
+	    oncolor = Colour.YELLOW_FULL;
+	    halfcolor =  Colour.YELLOW_LOW;
             break;
 
          case TempMode.USER1:
@@ -579,12 +594,12 @@ gridPage.updateTrackValue = function(track)
             value = userValue[track + 16];
             break;
       }
-
-      var drawVal = (value > 0) ? (value + 1) : 0;
+      var drawVal = (value > 0) ? (((value) >> 1))+1: 0;
 
       for(var scene=0; scene<8; scene++)
       {
-         setCellLED(this.mixerAlignedGrid ? track : scene, this.mixerAlignedGrid ? -Math.abs(scene)+7 : track, (scene < drawVal) ? oncolor : offcolor);
+         
+         setCellLED(this.mixerAlignedGrid ? track : scene, this.mixerAlignedGrid ? -Math.abs(scene)+7 : track, (scene < drawVal) ? (((scene == drawVal-1) && !(value & 1)) ? halfcolor:oncolor) : offcolor);
       }
    }
 };

@@ -69,14 +69,21 @@ seqPage.viewOffset = function()
 seqPage.stepColor = function(c,s,f)
 {
     if(seqPage.playingStep){
-        var d = seqPage.lastStep - seqPage.playingStep;
-        switch(d){
-            case 0: c = s ? (!f ? c:s):Colour.AMBER_FULL;break;
-            case 1: c = s ? (f ? c:s):Colour.YELLOW_LOW;break;
-            default: break;
+        var ls =  seqPage.lastStep, ps = seqPage.playingStep;
+        var d = ls - ps;
+        if(s){
+               var t1 = Math.floor(ls * 0.33), t2 = Math.floor(ls * 0.66);
+               c = ((!f && ps == t1) || (f && ps == t2)) ? s:c;
+        }else{
+                switch(d){
+                    case 1: 
+                    case 3: 
+                        c = Colour.RED_LOW;break;
+                    default: break;
+               }
        }
     }else{
-        c = s?c:Colour.RED_LOW;
+        c = s?c:Colour.RED_FULL;
     }
     return c;
 }
@@ -89,15 +96,20 @@ seqPage.updateOutputState = function()
    this.updateScrollButtons();
    setTopLED(6, WRITEOVR ? Colour.RED_FULL:Colour.YELLOW_FULL);
    setTopLED(7, seqPage.stepColor(this.detailMode ? Colour.GREEN_FULL : Colour.GREEN_LOW));
-   this.drawSequencer();
+   if(TEMPMODE!=TempMode.OFF){ 
+           gridPage.updateGrid();
+   }else{ this.drawSequencer();}
+   
 };
 
 seqPage.onSceneButton = function(row, isPressed)
 {
    if (isPressed)
    {
-      if(IS_EDIT_PRESSED){
-        activeNoteMap.mixerButton(row);
+      if(!IS_EDIT_PRESSED){
+        gridPage.onSceneButton(row,isPressed);
+   
+        //activeNoteMap.mixerButton(row);
       }else if (row >= 4)
       {
          this.setVelocity(row - 4);
@@ -111,6 +123,8 @@ seqPage.onSceneButton = function(row, isPressed)
          var stepInBeatTime = Math.pow(0.5, this.stepSize);
          cursorClip.setStepSize(stepInBeatTime);
       }
+   }else{
+      gridPage.setTempMode(TempMode.OFF);
    }
 };
 
@@ -152,6 +166,7 @@ seqPage.onDown = function(isPressed)
 
 seqPage.onGridButton = function(row, column, pressed)
 {
+   if(TEMPMODE != TempMode.OFF){ gridPage.onGridButton(row, column, pressed); return;}
    if (row < 4)
    {
       if (pressed)
@@ -216,6 +231,7 @@ seqPage.shouldKeyBeUsedForNoteInport = function(x,y)
 
 seqPage.setKey = function(key)
 {
+   seqPage.lastKey = seqPage.key;
    seqPage.key = key;
 
    //cursorClip.scrollToKey(key);
@@ -261,12 +277,13 @@ seqPage.drawSequencer = function()
          var index = y*8 + x + this.viewOffset();
 
          var isSet = this.detailMode ? this.hasAnyKey(index) : this.stepSet[index * 128 + this.key];
+         var isLastSet = (this.detailMode || !IS_EDIT_PRESSED || !this.lastKey) ? false: this.stepSet[index * 128 + this.lastKey];
          var isPlaying = index == this.playingStep;
-
+         
          var colour = isSet ?
             (isPlaying ? Colour.GREEN_FULL : Colour.AMBER_FULL) :
-            (isPlaying ? Colour.GREEN_LOW : Colour.OFF);
-
+            (isPlaying ? Colour.GREEN_LOW : (isLastSet ? Colour.RED_LOW: Colour.OFF));
+         
          if (this.detailMode && index == this.activeStep)
          {
             colour = Colour.GREEN_FULL;
@@ -278,8 +295,8 @@ seqPage.drawSequencer = function()
 
    for(var i=0; i<4; i++)
    {
-      setRightLED(i, seqPage.stepSize == i ? seqPage.stepColor(Colour.GREEN_FULL, Colour.GREEN_LOW,true) : Colour.GREEN_LOW);
-      setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL, Colour.AMBER_LOW) : Colour.AMBER_LOW);
+      setRightLED(i, seqPage.stepSize == i ? seqPage.stepColor(Colour.GREEN_FULL, Colour.OFF,true) : (!IS_EDIT_PRESSED?Colour.OFF:Colour.GREEN_LOW));
+      setRightLED(4 + i, seqPage.velocityStep == i ? seqPage.stepColor(Colour.AMBER_FULL, Colour.OFF) : (!IS_EDIT_PRESSED?Colour.OFF:Colour.AMBER_LOW));
    }
 
    for(var x=0; x<8; x++)

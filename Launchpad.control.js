@@ -39,7 +39,7 @@
 // these are here for people to change who don't have a lot of knowledge of programming.
 
 // Number of pads used for pans - 7 will allow center of pans, 8 will allow finer control but no easy way to center.
-var userVarPans = 8;
+var userVarPans = 16;
 // Playing of pad on velocity change is turned off, setting this to true will turn it on
 var userVelNote = false;
 // These setup your velocities
@@ -105,12 +105,15 @@ load("launchpad_step_sequencer.js"); // everything to do with the step sequencer
 // activePage is the page displayed on the Launchpad, the function changes the page and displays popups
 var activePage = null;
 
+function setArmed(page){
+         ARMED=(TEMPMODE != TempMode.OFF)?TEMPMODE+1:false;
+}
+
 function setActivePage(page)
 {
    var isInit = activePage == null;
+   setArmed();   
    
-   
-   ARMED=(TEMPMODE != TempMode.OFF)?TEMPMODE+1:false;
    if (page != activePage)
    {
       activePage = page;
@@ -149,6 +152,7 @@ var IS_KEYS_PRESSED = false;
 var IS_RECORD_PRESSED = false;
 
 // Declare arrays which are used to store information received from Bitwig about what is going on to display on pads
+var touched = initArray(0, 8);
 var volume = initArray(0, 8);
 var pan = initArray(0, 8);
 var mute = initArray(0, 8);
@@ -214,10 +218,10 @@ function init()
    {
       var track = trackBank.getTrack(t);
 
-      track.getVolume().addValueObserver(8, getTrackObserverFunc(t, volume));
+      track.getVolume().addValueObserver(16, getTrackObserverFunc(t, volume));
       track.getPan().addValueObserver(userVarPans, getTrackObserverFunc(t, pan));
-      track.getSend(0).addValueObserver(8, getTrackObserverFunc(t, sendA));
-      track.getSend(1).addValueObserver(8, getTrackObserverFunc(t, sendB));
+      track.getSend(0).addValueObserver(16, getTrackObserverFunc(t, sendA));
+      track.getSend(1).addValueObserver(16, getTrackObserverFunc(t, sendB));
       track.getMute().addValueObserver(getTrackObserverFunc(t, mute));
       track.getSolo().addValueObserver(getTrackObserverFunc(t, solo));
       track.getArm().addValueObserver(getTrackObserverFunc(t, arm));
@@ -274,7 +278,7 @@ function init()
    {
       var control = userControls.getControl(u);
 
-      control.addValueObserver(8, getTrackObserverFunc(u, userValue));
+      control.addValueObserver(16, getTrackObserverFunc(u, userValue));
       control.setLabel("U" + (u+1));
    }
 
@@ -385,7 +389,6 @@ function updateNoteTranlationTable()
          table[i] = activeNoteMap.cellToKey(x, y);
       }
    }
-
    noteInput.setKeyTranslationTable(table);
 }
 
@@ -427,19 +430,24 @@ function onMidi(status, data1, data2)
          case TopButton.USER1:
             if (isPressed)
             {
+               ARMED=false;
                IS_KEYS_PRESSED=true;  
             }else{
-               if(IS_KEYS_PRESSED){
+               if(IS_KEYS_PRESSED && !ARMED){
                 setActivePage(keysPage);
+               }
                 IS_KEYS_PRESSED=false;
-               }  
             }
             break;
 
          case TopButton.USER2:
             if (isPressed)
             {
-               IS_EDIT_PRESSED=true;
+               ARMED=false;
+               if(IS_KEYS_PRESSED)
+                       keysPage.mixerButton();
+               else
+                       IS_EDIT_PRESSED=true;
             }else{
                if(IS_EDIT_PRESSED){
                 setActivePage(seqPage);
